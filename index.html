@@ -8,8 +8,41 @@
 </head>
 <body>
   <main>
-    <canvas id="game" width="600" height="450" aria-label="Block Breaker game"></canvas>
-    <p>Move the paddle with the left and right arrow keys, or A and D.</p>
+    <div class="game-stage">
+      <canvas id="game" width="600" height="450" aria-label="Neon Breaker game"></canvas>
+      <section class="home-screen" id="home-screen" aria-labelledby="game-title">
+        <div class="home-content">
+          <p class="home-kicker">ARCADE SYSTEM / 01</p>
+          <h1 id="game-title"><span>NEON</span><span class="title-accent">BREAKER</span></h1>
+          <p class="home-subtitle">Clear the grid. Keep the ball alive.</p>
+          <div class="settings-bar" role="group" aria-label="Game settings">
+            <label class="setting-control">
+              <span class="setting-heading">Ball speed <output id="ball-speed-value" for="ball-speed">4</output></span>
+              <input id="ball-speed" type="range" min="2" max="8" step="1" value="4">
+            </label>
+            <label class="setting-control">
+              <span class="setting-heading">Paddle speed <output id="paddle-speed-value" for="paddle-speed">6</output></span>
+              <input id="paddle-speed" type="range" min="3" max="10" step="1" value="6">
+            </label>
+            <label class="setting-control">
+              <span class="setting-heading">Canvas size</span>
+              <select id="canvas-size">
+                <option value="compact">Compact</option>
+                <option value="standard" selected>Standard</option>
+                <option value="wide">Wide</option>
+              </select>
+            </label>
+          </div>
+          <button class="play-button" id="start-button" type="button">Start game</button>
+          <div class="controls-legend" aria-label="Move the paddle with the arrow keys or A and D">
+            <div class="key-group" aria-hidden="true">
+              <kbd>←</kbd><kbd>→</kbd><span>or</span><kbd>A</kbd><kbd>D</kbd>
+            </div>
+            <span class="control-label">Move paddle</span>
+          </div>
+        </div>
+      </section>
+    </div>
   </main>
 
   <!-- The order matters: game.js goes first because the other files use its settings. -->

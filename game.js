@@ -8,6 +8,8 @@
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+const homeScreen = document.getElementById("home-screen");
+const startButton = document.getElementById("start-button");
 
 const WIDTH = canvas.width;   // 600
 const HEIGHT = canvas.height; // 450
@@ -19,7 +21,7 @@ const HEIGHT = canvas.height; // 450
 // the ball moves each update (vx = sideways, vy = up/down).
 // A positive vy means the ball is moving DOWN the screen.
 // ------------------------------------------------------------
-const BALL_SPEED = 6;
+const BALL_SPEED = 4;
 
 const ball = {
   x: 0,
@@ -63,9 +65,16 @@ const particles = [];
 // keys["arrowleft"] is true while the left arrow is held down.
 // ------------------------------------------------------------
 const keys = {};
+let gameStarted = false;
 
 document.addEventListener("keydown", function (event) {
   keys[event.key.toLowerCase()] = true;
+
+  if (!gameStarted && (event.key === "Enter" || event.key === " ")) {
+    event.preventDefault();
+    beginGame();
+  }
+
   // Stop the arrow keys from scrolling the page.
   if (event.key.startsWith("Arrow")) {
     event.preventDefault();
@@ -214,12 +223,23 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 
-function start() {
-  bricks = makeBricks();  // bricks.js
-  resetBall();
+function beginGame() {
+  if (gameStarted) {
+    return;
+  }
+
+  gameStarted = true;
+  homeScreen.hidden = true;
   lastTime = performance.now();
   requestAnimationFrame(frame);
 }
 
+function start() {
+  bricks = makeBricks();  // bricks.js
+  resetBall();
+  draw();
+}
+
 // Wait until all three script files have loaded, then start.
+startButton.addEventListener("click", beginGame);
 window.addEventListener("load", start);
