@@ -8,11 +8,28 @@
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+const loadingScreen = document.getElementById("loading-screen");
 const homeScreen = document.getElementById("home-screen");
 const homePanel = document.getElementById("home-panel");
 const gameOverPanel = document.getElementById("game-over-panel");
 const startButton = document.getElementById("start-button");
 const playAgainButton = document.getElementById("play-again-button");
+const gameStoreButton = document.getElementById("game-store-button");
+const menuStoreButton = document.getElementById("menu-store-button");
+const storeDialog = document.getElementById("store-screen");
+const closeStoreButton = document.getElementById("close-store-button");
+const storeBalance = document.getElementById("store-balance");
+const gameStoreBalance = document.getElementById("game-store-balance");
+const menuStoreBalance = document.getElementById("menu-store-balance");
+const coinsEarnedResult = document.getElementById("coins-earned-result");
+const levelResult = document.getElementById("level-result");
+const upgradeButtons = {
+  paddleWidth: document.getElementById("buy-wide-paddle"),
+  paddleSpeed: document.getElementById("buy-paddle-boost"),
+  extraLife: document.getElementById("buy-extra-life")
+};
+const settingsToggle = document.getElementById("settings-toggle");
+const settingsPanel = document.getElementById("settings-panel");
 const ballSpeedControl = document.getElementById("ball-speed");
 const ballSpeedValue = document.getElementById("ball-speed-value");
 const paddleSpeedControl = document.getElementById("paddle-speed");
@@ -24,7 +41,16 @@ const WIDTH = canvas.width;   // 600
 const HEIGHT = canvas.height; // 450
 const STARTING_LIVES = 3;
 const HIGH_SCORE_KEY = "neon-breaker-high-score";
+const STORE_KEY = "neon-breaker-store";
 const NEON_CYAN = "#42f5e9";
+const PADDLE_COLOR = "#54a8ff";
+const BALL_COLOR = "#ffdc4a";
+const BASE_PADDLE_WIDTH = 90;
+const UPGRADE_DEFINITIONS = {
+  paddleWidth: { baseCost: 120, costStep: 100, maxLevel: 4 },
+  paddleSpeed: { baseCost: 100, costStep: 120, maxLevel: 5 },
+  extraLife: { baseCost: 250, costStep: 150, maxLevel: 3 }
+};
 
 
 // ------------------------------------------------------------
@@ -59,19 +85,142 @@ function resetBall() {
 const paddle = {
   x: WIDTH / 2 - 45,
   y: HEIGHT - 30,
-  width: 90,
+  width: BASE_PADDLE_WIDTH,
   height: 12,
   speed: 8
 };
 
+let coins = 0;
+let coinsEarnedThisRun = 0;
+const upgradeLevels = { paddleWidth: 0, paddleSpeed: 0, extraLife: 0 };
+let storeWasPlaying = false;
+
 function applySettings() {
   BALL_SPEED = Number(ballSpeedControl.value);
-  paddle.speed = Number(paddleSpeedControl.value);
   ballSpeedValue.value = BALL_SPEED;
   ballSpeedValue.textContent = BALL_SPEED;
-  paddleSpeedValue.value = paddle.speed;
-  paddleSpeedValue.textContent = paddle.speed;
+  paddleSpeedValue.value = Number(paddleSpeedControl.value);
+  paddleSpeedValue.textContent = paddleSpeedControl.value;
   main.dataset.canvasSize = canvasSizeControl.value;
+  applyUpgrades();
+}
+
+function applyUpgrades() {
+  const center = paddle.x + paddle.width / 2;
+  paddle.width = BASE_PADDLE_WIDTH + upgradeLevels.paddleWidth * 18;
+  paddle.speed = Number(paddleSpeedControl.value) + upgradeLevels.paddleSpeed;
+  paddle.x = Math.max(0, Math.min(WIDTH - paddle.width, center - paddle.width / 2));
+}
+
+function awardCoins(amount) {
+  const earned = Math.max(0, Math.floor(amount));
+  if (earned === 0) {
+    return;
+  }
+
+  coins += earned;
+  coinsEarnedThisRun += earned;
+  saveStore();
+  updateStoreUI();
+}
+
+function getUpgradeCost(name) {
+  const definition = UPGRADE_DEFINITIONS[name];
+  if (!definition) {
+    return Infinity;
+  }
+  return definition.baseCost + upgradeLevels[name] * definition.costStep;
+}
+
+function updateStoreUI() {
+  storeBalance.textContent = coins.toLocaleString();
+  gameStoreBalance.textContent = coins.toLocaleString();
+  menuStoreBalance.textContent = coins.toLocaleString();
+
+  for (const [name, button] of Object.entries(upgradeButtons)) {
+    const definition = UPGRADE_DEFINITIONS[name];
+    const level = upgradeLevels[name];
+    const atMaxLevel = level >= definition.maxLevel;
+    const cost = getUpgradeCost(name);
+    button.disabled = atMaxLevel || coins < cost;
+    button.textContent = atMaxLevel ? "Max level" : `Buy ${cost}`;
+  }
+}
+
+function buyUpgrade(name) {
+  const definition = UPGRADE_DEFINITIONS[name];
+  if (!definition) {
+    return;
+  }
+  const cost = getUpgradeCost(name);
+  if (upgradeLevels[name] >= definition.maxLevel || coins < cost) {
+    return;
+  }
+
+  coins -= cost;
+  upgradeLevels[name]++;
+
+  if (name === "extraLife" && storeWasPlaying) {
+    lives++;
+  }
+
+  applyUpgrades();
+  saveStore();
+  updateStoreUI();
+}
+
+function saveStore() {
+  try {
+    window.localStorage.setItem(STORE_KEY, JSON.stringify({ coins, upgrades: upgradeLevels }));
+  } catch {
+    // Store progress remains available for the current session.
+  }
+}
+
+function loadStore() {
+  try {
+    const savedStore = JSON.parse(window.localStorage.getItem(STORE_KEY) || "{}");
+    coins = Number.isSafeInteger(savedStore.coins) ? Math.max(0, savedStore.coins) : 0;
+    for (const [name, definition] of Object.entries(UPGRADE_DEFINITIONS)) {
+      const savedLevel = Number(savedStore.upgrades && savedStore.upgrades[name]);
+      upgradeLevels[name] = Number.isInteger(savedLevel)
+        ? Math.max(0, Math.min(definition.maxLevel, savedLevel))
+        : 0;
+    }
+  } catch {
+    coins = 0;
+    for (const name of Object.keys(upgradeLevels)) {
+      upgradeLevels[name] = 0;
+    }
+  }
+}
+
+function openStore() {
+  if (storeDialog.open) {
+    return;
+  }
+
+  storeWasPlaying = gameState === "playing";
+  if (storeWasPlaying) {
+    gameState = "store";
+  }
+  closeStoreButton.textContent = storeWasPlaying ? "Resume game" : "Close store";
+  updateStoreUI();
+  storeDialog.showModal();
+}
+
+function closeStore() {
+  if (storeDialog.open) {
+    storeDialog.close();
+  }
+
+  if (gameState === "store") {
+    gameState = "playing";
+    storeWasPlaying = false;
+    lastTime = performance.now();
+    leftover = 0;
+    requestAnimationFrame(frame);
+  }
 }
 
 
@@ -82,6 +231,7 @@ let bricks = [];
 const particles = [];
 let score = 0;
 let bricksBroken = 0;
+let level = 1;
 let lives = STARTING_LIVES;
 let highScore = 0;
 let runStartedAt = 0;
@@ -138,6 +288,12 @@ function update() {
   }
 }
 
+function advanceLevel() {
+  level++;
+  bricks = makeBricks(level);
+  awardCoins(25 + level * 5);
+}
+
 function movePaddle() {
   if (keys["arrowleft"] || keys["a"]) {
     paddle.x = paddle.x - paddle.speed;
@@ -163,6 +319,7 @@ function moveBall() {
 function createBrickExplosion(brick) {
   score += 100;
   bricksBroken++;
+  awardCoins(10);
   if (score > highScore) {
     highScore = score;
     saveHighScore();
@@ -217,6 +374,37 @@ function drawParticles() {
   ctx.shadowBlur = 0;
 }
 
+function drawLives() {
+  const barWidth = 14;
+  const barHeight = 8;
+  const barGap = 5;
+  const labelWidth = 40;
+  const labelGap = 10;
+  const maxLives = STARTING_LIVES + upgradeLevels.extraLife;
+  const barsWidth = maxLives * barWidth + (maxLives - 1) * barGap;
+  const left = WIDTH - 16 - labelWidth - labelGap - barsWidth;
+  const barsLeft = left + labelWidth + labelGap;
+
+  ctx.save();
+  ctx.font = "bold 11px Courier New, monospace";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#a7c3c5";
+  ctx.fillText("LIVES", left, 22);
+
+  ctx.textAlign = "center";
+  ctx.fillText(`LEVEL ${level}`, WIDTH / 2, 22);
+
+  ctx.fillStyle = NEON_CYAN;
+  ctx.shadowColor = NEON_CYAN;
+  ctx.shadowBlur = 8;
+  for (let i = 0; i < lives; i++) {
+    const x = barsLeft + i * (barWidth + barGap);
+    ctx.fillRect(x, 18, barWidth, barHeight);
+  }
+  ctx.restore();
+}
+
 
 // ------------------------------------------------------------
 // DRAW: paints the dark playfield and neon game pieces.
@@ -225,15 +413,18 @@ function draw() {
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  ctx.fillStyle = NEON_CYAN;
-  ctx.shadowColor = NEON_CYAN;
+  ctx.fillStyle = PADDLE_COLOR;
+  ctx.shadowColor = PADDLE_COLOR;
   ctx.shadowBlur = 14;
   ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+  ctx.fillStyle = BALL_COLOR;
+  ctx.shadowColor = BALL_COLOR;
   ctx.fillRect(ball.x, ball.y, ball.width, ball.height);
   ctx.shadowBlur = 0;
 
   drawBricks();  // bricks.js
   drawParticles();
+  drawLives();
 }
 
 
@@ -277,11 +468,14 @@ function beginGame() {
   }
 
   gameState = "playing";
-  bricks = makeBricks();
+  level = 1;
+  bricks = makeBricks(level);
   particles.length = 0;
   score = 0;
   bricksBroken = 0;
-  lives = STARTING_LIVES;
+  coinsEarnedThisRun = 0;
+  lives = STARTING_LIVES + upgradeLevels.extraLife;
+  applyUpgrades();
   runStartedAt = performance.now();
   resetBall();
   leftover = 0;
@@ -290,6 +484,7 @@ function beginGame() {
   gameOverPanel.hidden = true;
   startButton.hidden = false;
   playAgainButton.hidden = true;
+  gameStoreButton.hidden = false;
   homeScreen.setAttribute("aria-label", "Neon Breaker menu");
   homeScreen.hidden = true;
   lastTime = runStartedAt;
@@ -318,33 +513,65 @@ function finishGame() {
   const elapsedSeconds = Math.floor((performance.now() - runStartedAt) / 1000);
   const minutes = Math.floor(elapsedSeconds / 60);
   const seconds = String(elapsedSeconds % 60).padStart(2, "0");
+  awardCoins(Math.floor(score / 1000) * 25 + Math.floor(elapsedSeconds / 30) * 5);
 
   document.getElementById("high-score-result").textContent = highScore.toLocaleString();
   document.getElementById("run-score-result").textContent = score.toLocaleString();
+  levelResult.textContent = level;
   document.getElementById("bricks-broken-result").textContent = bricksBroken;
+  coinsEarnedResult.textContent = coinsEarnedThisRun.toLocaleString();
   document.getElementById("run-time-result").textContent = `${minutes}:${seconds}`;
-  document.getElementById("lives-used-result").textContent = STARTING_LIVES - lives;
+  document.getElementById("lives-used-result").textContent = STARTING_LIVES + upgradeLevels.extraLife - lives;
 
   homePanel.hidden = true;
   gameOverPanel.hidden = false;
   startButton.hidden = true;
   playAgainButton.hidden = false;
+  gameStoreButton.hidden = true;
   homeScreen.setAttribute("aria-label", "Neon Breaker game over");
   homeScreen.hidden = false;
 }
 
 function start() {
   loadHighScore();
+  loadStore();
   applySettings();
-  bricks = makeBricks();  // bricks.js
+  level = 1;
+  bricks = makeBricks(level);  // bricks.js
   resetBall();
+  updateStoreUI();
   draw();
+  window.setTimeout(() => {
+    loadingScreen.hidden = true;
+    homeScreen.inert = false;
+  }, 700);
 }
 
 // Wait until all three script files have loaded, then start.
+for (const [name, button] of Object.entries(upgradeButtons)) {
+  button.addEventListener("click", () => buyUpgrade(name));
+}
+
+gameStoreButton.addEventListener("click", openStore);
+menuStoreButton.addEventListener("click", openStore);
+closeStoreButton.addEventListener("click", closeStore);
+storeDialog.addEventListener("cancel", event => {
+  event.preventDefault();
+  closeStore();
+});
+storeDialog.addEventListener("click", event => {
+  if (event.target === storeDialog) {
+    closeStore();
+  }
+});
 ballSpeedControl.addEventListener("input", applySettings);
 paddleSpeedControl.addEventListener("input", applySettings);
 canvasSizeControl.addEventListener("change", applySettings);
+settingsToggle.addEventListener("click", function () {
+  const isExpanded = settingsToggle.getAttribute("aria-expanded") === "true";
+  settingsToggle.setAttribute("aria-expanded", String(!isExpanded));
+  settingsPanel.hidden = isExpanded;
+});
 startButton.addEventListener("click", beginGame);
 playAgainButton.addEventListener("click", beginGame);
 window.addEventListener("load", start);

@@ -8,9 +8,21 @@
 </head>
 <body>
   <main>
+    <section class="loading-screen" id="loading-screen" role="status" aria-live="polite">
+      <div class="loading-content">
+        <p class="home-kicker">ARCADE SYSTEM / 01</p>
+        <h1><span>NEON</span><span class="title-accent">BREAKER</span></h1>
+        <p class="loading-label">Initializing playfield</p>
+        <div class="loading-track" aria-hidden="true"><span></span></div>
+        <p class="loading-status">Calibrating grid</p>
+      </div>
+    </section>
     <div class="game-stage">
       <canvas id="game" width="600" height="450" aria-label="Neon Breaker game"></canvas>
-      <section class="home-screen" id="home-screen" aria-label="Neon Breaker menu">
+      <button class="game-store-button" id="game-store-button" type="button" aria-haspopup="dialog" aria-controls="store-screen" hidden>
+        Store <span id="game-store-balance" aria-live="polite">0</span>
+      </button>
+      <section class="home-screen" id="home-screen" aria-label="Neon Breaker menu" inert>
         <div class="home-content">
           <div id="home-panel">
             <p class="home-kicker">ARCADE SYSTEM / 01</p>
@@ -23,12 +35,15 @@
             <div class="run-stats" aria-label="Run statistics">
               <div class="run-stat"><span>High score</span><strong id="high-score-result">0</strong></div>
               <div class="run-stat"><span>Run score</span><strong id="run-score-result">0</strong></div>
+              <div class="run-stat"><span>Level reached</span><strong id="level-result">1</strong></div>
               <div class="run-stat"><span>Bricks broken</span><strong id="bricks-broken-result">0</strong></div>
+              <div class="run-stat"><span>Coins earned</span><strong id="coins-earned-result">0</strong></div>
               <div class="run-stat"><span>Time played</span><strong id="run-time-result">0:00</strong></div>
               <div class="run-stat"><span>Lives used</span><strong id="lives-used-result">0</strong></div>
             </div>
           </div>
-          <div class="settings-bar" role="group" aria-label="Game settings">
+          <button class="settings-toggle" id="settings-toggle" type="button" aria-expanded="false" aria-controls="settings-panel">Settings</button>
+          <div class="settings-bar" id="settings-panel" role="group" aria-label="Game settings" hidden>
             <label class="setting-control">
               <span class="setting-heading">Ball speed <output id="ball-speed-value" for="ball-speed">4</output></span>
               <input id="ball-speed" type="range" min="2" max="8" step="1" value="4">
@@ -48,6 +63,9 @@
           </div>
           <button class="play-button" id="start-button" type="button">Start game</button>
           <button class="play-button" id="play-again-button" type="button" hidden>Play again</button>
+          <button class="menu-store-button" id="menu-store-button" type="button" aria-haspopup="dialog" aria-controls="store-screen">
+            Store <span id="menu-store-balance" aria-live="polite">0</span> coins
+          </button>
           <div class="controls-legend" role="group" aria-label="Move the paddle with the arrow keys or A and D">
             <div class="key-group" aria-hidden="true">
               <kbd>←</kbd><kbd>→</kbd><span>or</span><kbd>A</kbd><kbd>D</kbd>
@@ -57,6 +75,42 @@
         </div>
       </section>
     </div>
+    <dialog class="store-screen" id="store-screen" aria-labelledby="store-title">
+      <div class="store-content">
+        <div class="store-header">
+          <div>
+            <p class="home-kicker">UPGRADE BAY</p>
+            <h2 id="store-title">Store</h2>
+          </div>
+          <p class="store-balance">Coins <strong id="store-balance" aria-live="polite">0</strong></p>
+        </div>
+        <div class="upgrade-list">
+          <article class="upgrade-row">
+            <div class="upgrade-copy">
+              <h3>Wide paddle</h3>
+              <p>Increase paddle width by 18 pixels.</p>
+            </div>
+            <button class="upgrade-buy" id="buy-wide-paddle" type="button">Buy 120</button>
+          </article>
+          <article class="upgrade-row">
+            <div class="upgrade-copy">
+              <h3>Paddle boost</h3>
+              <p>Increase paddle movement speed.</p>
+            </div>
+            <button class="upgrade-buy" id="buy-paddle-boost" type="button">Buy 100</button>
+          </article>
+          <article class="upgrade-row">
+            <div class="upgrade-copy">
+              <h3>Extra life</h3>
+              <p>Start each run with one more life.</p>
+            </div>
+            <button class="upgrade-buy" id="buy-extra-life" type="button">Buy 250</button>
+          </article>
+        </div>
+        <p class="store-note">Earn 10 coins per brick, plus bonuses for score and survival time.</p>
+        <button class="store-resume" id="close-store-button" type="button">Resume game</button>
+      </div>
+    </dialog>
   </main>
 
   <!-- The order matters: game.js goes first because the other files use its settings. -->

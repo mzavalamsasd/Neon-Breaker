@@ -46,7 +46,7 @@ function bounceOffPaddle() {
 }
 
 
-// The ball bounces off and breaks the brick it touches.
+// Each brick takes one hit per collision and breaks when its hits run out.
 function bounceOffBricks() {
   for (let i = 0; i < bricks.length; i++) {
     const brick = bricks[i];
@@ -76,8 +76,14 @@ function bounceOffBricks() {
       }
     }
 
-    createBrickExplosion(brick);
-    bricks.splice(i, 1);
+    brick.hits--;
+    if (brick.hits <= 0) {
+      createBrickExplosion(brick);
+      bricks.splice(i, 1);
+      if (bricks.length === 0) {
+        advanceLevel();
+      }
+    }
     break;  // bounce off one brick per update, then stop looking
   }
 }
