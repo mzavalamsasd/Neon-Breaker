@@ -33,10 +33,11 @@ main {
   max-width: 680px;
   padding: 18px;
   text-align: center;
-  transition: max-width 180ms ease;
+  transition: width 180ms ease, max-width 180ms ease;
 }
 
 main[data-canvas-size="compact"] {
+  width: 88%;
   max-width: 560px;
 }
 
@@ -131,6 +132,41 @@ canvas {
 .home-content h1 .title-accent {
   color: var(--cyan);
   text-shadow: 0 0 22px rgba(66, 245, 233, 0.65);
+}
+
+.game-over-panel h1 {
+  margin-bottom: 24px;
+}
+
+.run-stats {
+  display: grid;
+  width: min(100%, 620px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px 12px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.run-stat {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  padding-left: 12px;
+  border-left: 1px solid rgba(66, 245, 233, 0.42);
+}
+
+.run-stat span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.run-stat strong {
+  overflow-wrap: anywhere;
+  color: #efffff;
+  font: 700 22px "Courier New", monospace;
+  text-shadow: 0 0 12px rgba(66, 245, 233, 0.28);
 }
 
 .home-subtitle {
@@ -336,6 +372,28 @@ p::after {
   .home-subtitle {
     margin: 8px 0 0;
     font-size: 11px;
+  }
+
+  .game-over-panel h1 {
+    margin-bottom: 18px;
+  }
+
+  .run-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 8px;
+  }
+
+  .run-stat {
+    gap: 4px;
+    padding-left: 8px;
+  }
+
+  .run-stat span {
+    font-size: 9px;
+  }
+
+  .run-stat strong {
+    font-size: 18px;
   }
 
   .settings-bar {

@@ -10,11 +10,24 @@
   <main>
     <div class="game-stage">
       <canvas id="game" width="600" height="450" aria-label="Neon Breaker game"></canvas>
-      <section class="home-screen" id="home-screen" aria-labelledby="game-title">
+      <section class="home-screen" id="home-screen" aria-label="Neon Breaker menu">
         <div class="home-content">
-          <p class="home-kicker">ARCADE SYSTEM / 01</p>
-          <h1 id="game-title"><span>NEON</span><span class="title-accent">BREAKER</span></h1>
-          <p class="home-subtitle">Clear the grid. Keep the ball alive.</p>
+          <div id="home-panel">
+            <p class="home-kicker">ARCADE SYSTEM / 01</p>
+            <h1 id="game-title"><span>NEON</span><span class="title-accent">BREAKER</span></h1>
+            <p class="home-subtitle">Clear the grid. Keep the ball alive.</p>
+          </div>
+          <div class="game-over-panel" id="game-over-panel" hidden>
+            <p class="home-kicker">RUN COMPLETE</p>
+            <h1 id="game-over-title"><span>GAME</span><span class="title-accent">OVER</span></h1>
+            <div class="run-stats" aria-label="Run statistics">
+              <div class="run-stat"><span>High score</span><strong id="high-score-result">0</strong></div>
+              <div class="run-stat"><span>Run score</span><strong id="run-score-result">0</strong></div>
+              <div class="run-stat"><span>Bricks broken</span><strong id="bricks-broken-result">0</strong></div>
+              <div class="run-stat"><span>Time played</span><strong id="run-time-result">0:00</strong></div>
+              <div class="run-stat"><span>Lives used</span><strong id="lives-used-result">0</strong></div>
+            </div>
+          </div>
           <div class="settings-bar" role="group" aria-label="Game settings">
             <label class="setting-control">
               <span class="setting-heading">Ball speed <output id="ball-speed-value" for="ball-speed">4</output></span>
@@ -34,7 +47,8 @@
             </label>
           </div>
           <button class="play-button" id="start-button" type="button">Start game</button>
-          <div class="controls-legend" aria-label="Move the paddle with the arrow keys or A and D">
+          <button class="play-button" id="play-again-button" type="button" hidden>Play again</button>
+          <div class="controls-legend" role="group" aria-label="Move the paddle with the arrow keys or A and D">
             <div class="key-group" aria-hidden="true">
               <kbd>←</kbd><kbd>→</kbd><span>or</span><kbd>A</kbd><kbd>D</kbd>
             </div>

@@ -8,7 +8,7 @@ const BRICK_WIDTH = 60;
 const BRICK_HEIGHT = 20;
 const BRICK_GAP = 6;     // empty space between bricks
 const BRICKS_TOP = 50;   // how far down the first row starts
-const BRICK_COLORS = ["#42f5e9", "#d6ff58", "#ff4bd8", "#ff7a45"];
+const BRICK_COLOR = "#42f5e9";
 
 // Builds the list of bricks. Each brick is an object with an
 // x, y, width, and height.
@@ -26,7 +26,7 @@ function makeBricks() {
         y: BRICKS_TOP + row * (BRICK_HEIGHT + BRICK_GAP),
         width: BRICK_WIDTH,
         height: BRICK_HEIGHT,
-        color: BRICK_COLORS[row % BRICK_COLORS.length]
+        color: BRICK_COLOR
       });
     }
   }
