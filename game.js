@@ -19,7 +19,7 @@ const HEIGHT = canvas.height; // 450
 // the ball moves each update (vx = sideways, vy = up/down).
 // A positive vy means the ball is moving DOWN the screen.
 // ------------------------------------------------------------
-const BALL_SPEED = 4;
+const BALL_SPEED = 6;
 
 const ball = {
   x: 0,
@@ -55,6 +55,7 @@ const paddle = {
 // THE BRICKS (the list is filled in by makeBricks() in bricks.js)
 // ------------------------------------------------------------
 let bricks = [];
+const particles = [];
 
 
 // ------------------------------------------------------------
@@ -87,6 +88,7 @@ function update() {
   bounceOffWalls();   // collisions.js
   bounceOffPaddle();  // collisions.js
   bounceOffBricks();  // collisions.js
+  updateParticles();
 
   // The ball fell off the bottom: back to the center.
   if (ball.y > HEIGHT) {
@@ -116,6 +118,56 @@ function moveBall() {
   ball.y = ball.y + ball.vy;
 }
 
+function createBrickExplosion(brick) {
+  const particleCount = 14;
+  const colors = ["#42f5e9", "#d6ff58", "#ff4bd8"];
+
+  for (let i = 0; i < particleCount; i++) {
+    const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.3;
+    const speed = 1.5 + Math.random() * 3.5;
+    const life = 18 + Math.floor(Math.random() * 12);
+
+    particles.push({
+      x: brick.x + brick.width / 2,
+      y: brick.y + brick.height / 2,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size: 2 + Math.random() * 3,
+      life,
+      maxLife: life,
+      color: colors[i % colors.length]
+    });
+  }
+}
+
+function updateParticles() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const particle = particles[i];
+    particle.x += particle.vx;
+    particle.y += particle.vy;
+    particle.vx *= 0.96;
+    particle.vy *= 0.96;
+    particle.life--;
+
+    if (particle.life <= 0) {
+      particles.splice(i, 1);
+    }
+  }
+}
+
+function drawParticles() {
+  for (const particle of particles) {
+    ctx.globalAlpha = particle.life / particle.maxLife;
+    ctx.fillStyle = particle.color;
+    ctx.shadowColor = particle.color;
+    ctx.shadowBlur = 12;
+    ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+  }
+
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
+}
+
 
 // ------------------------------------------------------------
 // DRAW: paints everything on the canvas. Black background,
@@ -130,6 +182,7 @@ function draw() {
   ctx.fillRect(ball.x, ball.y, ball.width, ball.height);
 
   drawBricks();  // bricks.js
+  drawParticles();
 }
 
 
