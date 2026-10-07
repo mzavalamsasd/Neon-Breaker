@@ -40,8 +40,18 @@ function bounceOffWalls() {
 // when it is falling onto the paddle.
 function bounceOffPaddle() {
   if (boxesTouch(ball, paddle) && ball.vy > 0) {
+    const paddleCenter = paddle.x + paddle.width / 2;
+    const hitPosition = (ball.x + ball.width / 2 - paddleCenter) / (paddle.width / 2);
+    const gripBoost = upgradeLevels.paddleGrip * 0.8;
+    const speed = Math.max(Math.hypot(ball.vx, ball.vy), BALL_SPEED + 1);
+
     ball.y = paddle.y - ball.height;  // sit on top of the paddle
-    ball.vy = -ball.vy;
+    ball.vy = -(Math.abs(speed) * (0.9 + gripBoost * 0.08));
+    ball.vx = hitPosition * (BALL_SPEED + 1.5 + gripBoost);
+
+    if (Math.abs(ball.vx) < 1.5) {
+      ball.vx = hitPosition < 0 ? -1.5 : 1.5;
+    }
   }
 }
 

@@ -26,7 +26,10 @@ const levelResult = document.getElementById("level-result");
 const upgradeButtons = {
   paddleWidth: document.getElementById("buy-wide-paddle"),
   paddleSpeed: document.getElementById("buy-paddle-boost"),
-  extraLife: document.getElementById("buy-extra-life")
+  extraLife: document.getElementById("buy-extra-life"),
+  ballSpeed: document.getElementById("buy-ball-speed"),
+  coinBonus: document.getElementById("buy-coin-bonus"),
+  paddleGrip: document.getElementById("buy-paddle-grip")
 };
 const settingsToggle = document.getElementById("settings-toggle");
 const settingsPanel = document.getElementById("settings-panel");
@@ -49,7 +52,10 @@ const BASE_PADDLE_WIDTH = 90;
 const UPGRADE_DEFINITIONS = {
   paddleWidth: { baseCost: 120, costStep: 100, maxLevel: 4 },
   paddleSpeed: { baseCost: 100, costStep: 120, maxLevel: 5 },
-  extraLife: { baseCost: 250, costStep: 150, maxLevel: 3 }
+  extraLife: { baseCost: 250, costStep: 150, maxLevel: 3 },
+  ballSpeed: { baseCost: 160, costStep: 130, maxLevel: 4 },
+  coinBonus: { baseCost: 180, costStep: 150, maxLevel: 4 },
+  paddleGrip: { baseCost: 210, costStep: 170, maxLevel: 4 }
 };
 
 
@@ -92,7 +98,7 @@ const paddle = {
 
 let coins = 0;
 let coinsEarnedThisRun = 0;
-const upgradeLevels = { paddleWidth: 0, paddleSpeed: 0, extraLife: 0 };
+const upgradeLevels = { paddleWidth: 0, paddleSpeed: 0, extraLife: 0, ballSpeed: 0, coinBonus: 0, paddleGrip: 0 };
 let storeWasPlaying = false;
 
 function applySettings() {
@@ -109,11 +115,23 @@ function applyUpgrades() {
   const center = paddle.x + paddle.width / 2;
   paddle.width = BASE_PADDLE_WIDTH + upgradeLevels.paddleWidth * 18;
   paddle.speed = Number(paddleSpeedControl.value) + upgradeLevels.paddleSpeed;
+
+  const baseBallSpeed = Number(ballSpeedControl.value) + upgradeLevels.ballSpeed * 0.8;
+  BALL_SPEED = baseBallSpeed;
+
+  const currentSpeed = Math.hypot(ball.vx, ball.vy) || BALL_SPEED;
+  if (ball.vx !== 0 || ball.vy !== 0) {
+    const speedScale = BALL_SPEED / currentSpeed;
+    ball.vx *= speedScale;
+    ball.vy *= speedScale;
+  }
+
   paddle.x = Math.max(0, Math.min(WIDTH - paddle.width, center - paddle.width / 2));
 }
 
 function awardCoins(amount) {
-  const earned = Math.max(0, Math.floor(amount));
+  const bonusMultiplier = 1 + upgradeLevels.coinBonus * 0.2;
+  const earned = Math.max(0, Math.floor(amount * bonusMultiplier));
   if (earned === 0) {
     return;
   }
