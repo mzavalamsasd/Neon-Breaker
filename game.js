@@ -27,9 +27,16 @@ const upgradeButtons = {
   paddleWidth: document.getElementById("buy-wide-paddle"),
   paddleSpeed: document.getElementById("buy-paddle-boost"),
   extraLife: document.getElementById("buy-extra-life"),
+  blockBlaster: document.getElementById("buy-block-blaster"),
+  pulseCannon: document.getElementById("buy-pulse-cannon"),
+  scatterShot: document.getElementById("buy-scatter-shot"),
+  railCannon: document.getElementById("buy-rail-cannon"),
   ballSpeed: document.getElementById("buy-ball-speed"),
   coinBonus: document.getElementById("buy-coin-bonus"),
-  paddleGrip: document.getElementById("buy-paddle-grip")
+  paddleGrip: document.getElementById("buy-paddle-grip"),
+  scoreBoost: document.getElementById("buy-score-boost"),
+  arcShield: document.getElementById("buy-arc-shield"),
+  chainBonus: document.getElementById("buy-chain-bonus")
 };
 const settingsToggle = document.getElementById("settings-toggle");
 const settingsPanel = document.getElementById("settings-panel");
@@ -53,9 +60,16 @@ const UPGRADE_DEFINITIONS = {
   paddleWidth: { baseCost: 120, costStep: 100, maxLevel: 4 },
   paddleSpeed: { baseCost: 100, costStep: 120, maxLevel: 5 },
   extraLife: { baseCost: 250, costStep: 150, maxLevel: 3 },
+  blockBlaster: { baseCost: 300, costStep: 200, maxLevel: 3 },
+  pulseCannon: { baseCost: 360, costStep: 220, maxLevel: 3 },
+  scatterShot: { baseCost: 420, costStep: 240, maxLevel: 3 },
+  railCannon: { baseCost: 520, costStep: 280, maxLevel: 3 },
   ballSpeed: { baseCost: 160, costStep: 130, maxLevel: 4 },
   coinBonus: { baseCost: 180, costStep: 150, maxLevel: 4 },
-  paddleGrip: { baseCost: 210, costStep: 170, maxLevel: 4 }
+  paddleGrip: { baseCost: 210, costStep: 170, maxLevel: 4 },
+  scoreBoost: { baseCost: 220, costStep: 180, maxLevel: 4 },
+  arcShield: { baseCost: 260, costStep: 220, maxLevel: 3 },
+  chainBonus: { baseCost: 200, costStep: 160, maxLevel: 4 }
 };
 
 
@@ -98,7 +112,26 @@ const paddle = {
 
 let coins = 0;
 let coinsEarnedThisRun = 0;
-const upgradeLevels = { paddleWidth: 0, paddleSpeed: 0, extraLife: 0, ballSpeed: 0, coinBonus: 0, paddleGrip: 0 };
+let shieldCharges = 0;
+let blasterCooldown = 0;
+let muzzleFlash = 0;
+const projectiles = [];
+const enemyProjectiles = [];
+const upgradeLevels = {
+  paddleWidth: 0,
+  paddleSpeed: 0,
+  extraLife: 0,
+  blockBlaster: 0,
+  pulseCannon: 0,
+  scatterShot: 0,
+  railCannon: 0,
+  ballSpeed: 0,
+  coinBonus: 0,
+  paddleGrip: 0,
+  scoreBoost: 0,
+  arcShield: 0,
+  chainBonus: 0
+};
 let storeWasPlaying = false;
 
 function applySettings() {
@@ -130,7 +163,7 @@ function applyUpgrades() {
 }
 
 function awardCoins(amount) {
-  const bonusMultiplier = 1 + upgradeLevels.coinBonus * 0.2;
+  const bonusMultiplier = 1 + upgradeLevels.coinBonus * 0.2 + upgradeLevels.chainBonus * 0.1;
   const earned = Math.max(0, Math.floor(amount * bonusMultiplier));
   if (earned === 0) {
     return;
@@ -150,10 +183,27 @@ function getUpgradeCost(name) {
   return definition.baseCost + upgradeLevels[name] * definition.costStep;
 }
 
+function updateMenuStats() {
+  const menuHighScore = document.getElementById("menu-high-score");
+  const menuCoins = document.getElementById("menu-coins");
+  const menuBestLevel = document.getElementById("menu-best-level");
+
+  if (menuHighScore) {
+    menuHighScore.textContent = highScore.toLocaleString();
+  }
+  if (menuCoins) {
+    menuCoins.textContent = coins.toLocaleString();
+  }
+  if (menuBestLevel) {
+    menuBestLevel.textContent = String(Math.max(1, level));
+  }
+}
+
 function updateStoreUI() {
   storeBalance.textContent = coins.toLocaleString();
   gameStoreBalance.textContent = coins.toLocaleString();
   menuStoreBalance.textContent = coins.toLocaleString();
+  updateMenuStats();
 
   for (const [name, button] of Object.entries(upgradeButtons)) {
     const definition = UPGRADE_DEFINITIONS[name];
@@ -181,6 +231,9 @@ function buyUpgrade(name) {
   if (name === "extraLife" && storeWasPlaying) {
     lives++;
   }
+  if (name === "arcShield") {
+    shieldCharges += 1;
+  }
 
   applyUpgrades();
   saveStore();
@@ -189,7 +242,7 @@ function buyUpgrade(name) {
 
 function saveStore() {
   try {
-    window.localStorage.setItem(STORE_KEY, JSON.stringify({ coins, upgrades: upgradeLevels }));
+    window.localStorage.setItem(STORE_KEY, JSON.stringify({ coins, upgrades: upgradeLevels, shieldCharges }));
   } catch {
     // Store progress remains available for the current session.
   }
@@ -205,11 +258,16 @@ function loadStore() {
         ? Math.max(0, Math.min(definition.maxLevel, savedLevel))
         : 0;
     }
+    shieldCharges = Number.isInteger(savedStore.shieldCharges) ? Math.max(0, savedStore.shieldCharges) : upgradeLevels.arcShield;
+    if (shieldCharges < upgradeLevels.arcShield) {
+      shieldCharges = upgradeLevels.arcShield;
+    }
   } catch {
     coins = 0;
     for (const name of Object.keys(upgradeLevels)) {
       upgradeLevels[name] = 0;
     }
+    shieldCharges = 0;
   }
 }
 
@@ -263,12 +321,17 @@ const keys = {};
 let gameState = "home";
 
 document.addEventListener("keydown", function (event) {
-  keys[event.key.toLowerCase()] = true;
+  const key = event.key.toLowerCase();
+  keys[key] = true;
   const activeTag = document.activeElement && document.activeElement.tagName;
 
   if (gameState !== "playing" && activeTag === "BODY" && (event.key === "Enter" || event.key === " ")) {
     event.preventDefault();
     beginGame();
+  }
+
+  if (gameState === "playing" && (event.code === "Space" || key === " ")) {
+    event.preventDefault();
   }
 
   // Stop the arrow keys from scrolling the page.
@@ -286,17 +349,173 @@ document.addEventListener("keyup", function (event) {
 // UPDATE: runs 60 times every second. Move things, then check
 // what they touched.
 // ------------------------------------------------------------
+function fireBlaster() {
+  const totalWeaponLevel = upgradeLevels.blockBlaster + upgradeLevels.pulseCannon + upgradeLevels.scatterShot + upgradeLevels.railCannon;
+  if (totalWeaponLevel <= 0 || blasterCooldown > 0 || gameState !== "playing") {
+    return;
+  }
+
+  const shotWidth = 6;
+  const shotHeight = 12;
+  const baseSpeed = 8 + Math.max(upgradeLevels.blockBlaster, upgradeLevels.pulseCannon) * 1.5;
+
+  const patterns = [];
+
+  if (upgradeLevels.blockBlaster > 0) {
+    patterns.push({ count: 1 + Math.min(1, upgradeLevels.blockBlaster - 1), speed: baseSpeed, color: "#d6ff58", width: shotWidth, height: shotHeight, spread: 0 });
+  }
+
+  if (upgradeLevels.pulseCannon > 0) {
+    patterns.push({ count: 1 + Math.min(1, upgradeLevels.pulseCannon - 1), speed: baseSpeed + 2.5, color: "#42f5e9", width: 5, height: 10, spread: 0 });
+  }
+
+  if (upgradeLevels.scatterShot > 0) {
+    patterns.push({ count: 3 + Math.min(1, upgradeLevels.scatterShot - 1), speed: 6 + upgradeLevels.scatterShot * 1.3, color: "#ff4bd8", width: 5, height: 10, spread: 10 });
+  }
+
+  if (upgradeLevels.railCannon > 0) {
+    patterns.push({ count: 1, speed: 12 + upgradeLevels.railCannon * 2, color: "#ff7a45", width: 7, height: 16, spread: 0 });
+  }
+
+  for (const pattern of patterns) {
+    for (let i = 0; i < pattern.count; i++) {
+      const offset = pattern.spread > 0 ? (i - (pattern.count - 1) / 2) * pattern.spread : 0;
+      projectiles.push({
+        x: paddle.x + paddle.width / 2 - pattern.width / 2 + offset,
+        y: paddle.y - pattern.height,
+        width: pattern.width,
+        height: pattern.height,
+        vy: -pattern.speed,
+        color: pattern.color,
+        damage: 1 + Math.floor((upgradeLevels.blockBlaster + upgradeLevels.pulseCannon + upgradeLevels.railCannon) / 2)
+      });
+    }
+  }
+
+  muzzleFlash = 1;
+  blasterCooldown = 180 - Math.min(60, totalWeaponLevel * 12);
+}
+
+function updateProjectiles() {
+  for (let i = projectiles.length - 1; i >= 0; i--) {
+    const projectile = projectiles[i];
+    projectile.y += projectile.vy;
+
+    if (projectile.y + projectile.height < 0) {
+      projectiles.splice(i, 1);
+      continue;
+    }
+
+    let hitBrick = false;
+    for (let j = 0; j < bricks.length; j++) {
+      const brick = bricks[j];
+      if (!boxesTouch(projectile, brick)) {
+        continue;
+      }
+
+      brick.hits -= projectile.damage || 1;
+      if (brick.hits <= 0) {
+        createBrickExplosion(brick);
+        bricks.splice(j, 1);
+        if (bricks.length === 0) {
+          advanceLevel();
+        }
+      }
+
+      projectiles.splice(i, 1);
+      hitBrick = true;
+      break;
+    }
+
+    if (hitBrick) {
+      continue;
+    }
+  }
+}
+
+function updateEnemyProjectiles() {
+  for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
+    const projectile = enemyProjectiles[i];
+    projectile.x += projectile.vx;
+    projectile.y += projectile.vy;
+
+    if (projectile.y > HEIGHT + projectile.height) {
+      enemyProjectiles.splice(i, 1);
+      continue;
+    }
+
+    if (boxesTouch(projectile, paddle)) {
+      enemyProjectiles.splice(i, 1);
+
+      if (shieldCharges > 0) {
+        shieldCharges--;
+        return;
+      }
+
+      lives--;
+      if (lives <= 0) {
+        finishGame();
+        return;
+      }
+      resetBall();
+      continue;
+    }
+  }
+
+  for (const brick of bricks) {
+    brick.fireCooldown = (brick.fireCooldown ?? brick.fireRate) - 1;
+    if (brick.fireCooldown > 0) {
+      continue;
+    }
+
+    const targetX = paddle.x + paddle.width / 2;
+    const originX = brick.x + brick.width / 2;
+    const originY = brick.y + brick.height;
+    const dx = targetX - originX;
+    const dy = paddle.y - originY;
+    const distance = Math.max(12, Math.hypot(dx, dy));
+    const speed = 2.6 + level * 0.25;
+
+    enemyProjectiles.push({
+      x: originX - 3,
+      y: originY,
+      width: 6,
+      height: 10,
+      vx: (dx / distance) * speed,
+      vy: (dy / distance) * speed,
+      color: brick.accent || brick.color
+    });
+
+    brick.fireCooldown = brick.fireRate + Math.random() * (brick.fireRate * 0.7);
+  }
+}
+
 function update() {
   movePaddle();
   moveBall();
 
+  if (keys[" "] && (upgradeLevels.blockBlaster + upgradeLevels.pulseCannon + upgradeLevels.scatterShot + upgradeLevels.railCannon) > 0) {
+    fireBlaster();
+  }
+
+  blasterCooldown = Math.max(0, blasterCooldown - 1000 / 60);
+  muzzleFlash = Math.max(0, muzzleFlash - 0.12);
+
   bounceOffWalls();   // collisions.js
   bounceOffPaddle();  // collisions.js
   bounceOffBricks();  // collisions.js
+  updateProjectiles();
+  updateEnemyProjectiles();
   updateParticles();
 
   // The ball fell off the bottom: lose a life or end the run.
   if (ball.y > HEIGHT) {
+    if (shieldCharges > 0) {
+      shieldCharges--;
+      resetBall();
+      return;
+    }
+
     lives--;
     if (lives <= 0) {
       finishGame();
@@ -309,6 +528,7 @@ function update() {
 function advanceLevel() {
   level++;
   bricks = makeBricks(level);
+  enemyProjectiles.length = 0;
   awardCoins(25 + level * 5);
 }
 
@@ -335,7 +555,8 @@ function moveBall() {
 }
 
 function createBrickExplosion(brick) {
-  score += 100;
+  const scoreMultiplier = 1 + upgradeLevels.scoreBoost * 0.12;
+  score += Math.round(100 * scoreMultiplier);
   bricksBroken++;
   awardCoins(10);
   if (score > highScore) {
@@ -427,6 +648,75 @@ function drawLives() {
 // ------------------------------------------------------------
 // DRAW: paints the dark playfield and neon game pieces.
 // ------------------------------------------------------------
+function drawProjectiles() {
+  for (const projectile of projectiles) {
+    ctx.fillStyle = projectile.color;
+    ctx.shadowColor = projectile.color;
+    ctx.shadowBlur = 12;
+    ctx.fillRect(projectile.x, projectile.y, projectile.width, projectile.height);
+  }
+
+  ctx.shadowBlur = 0;
+}
+
+function drawEnemyProjectiles() {
+  for (const projectile of enemyProjectiles) {
+    ctx.fillStyle = projectile.color;
+    ctx.shadowColor = projectile.color;
+    ctx.shadowBlur = 14;
+    ctx.fillRect(projectile.x, projectile.y, projectile.width, projectile.height);
+    ctx.fillStyle = "rgba(255,255,255,0.6)";
+    ctx.fillRect(projectile.x + 1, projectile.y + 1, 2, 2);
+  }
+
+  ctx.shadowBlur = 0;
+}
+
+function drawRadar() {
+  const radarX = WIDTH - 120;
+  const radarY = HEIGHT - 90;
+  const radarW = 98;
+  const radarH = 72;
+  const radarPadding = 6;
+  const scaleX = (radarW - radarPadding * 2) / WIDTH;
+  const scaleY = (radarH - radarPadding * 2) / HEIGHT;
+
+  ctx.save();
+  ctx.fillStyle = "rgba(7, 18, 22, 0.8)";
+  ctx.strokeStyle = "rgba(66, 245, 233, 0.7)";
+  ctx.lineWidth = 1;
+  ctx.fillRect(radarX, radarY, radarW, radarH);
+  ctx.strokeRect(radarX, radarY, radarW, radarH);
+
+  ctx.beginPath();
+  ctx.moveTo(radarX + radarW / 2, radarY + 2);
+  ctx.lineTo(radarX + radarW / 2, radarY + radarH - 2);
+  ctx.moveTo(radarX + 2, radarY + radarH / 2);
+  ctx.lineTo(radarX + radarW - 2, radarY + radarH / 2);
+  ctx.strokeStyle = "rgba(66, 245, 233, 0.35)";
+  ctx.stroke();
+
+  ctx.fillStyle = "#d6ff58";
+  ctx.fillRect(
+    radarX + radarPadding + paddle.x * scaleX,
+    radarY + radarPadding + paddle.y * scaleY,
+    4,
+    4
+  );
+
+  for (const brick of bricks) {
+    const dotX = radarX + radarPadding + brick.x * scaleX + brick.width * scaleX / 2;
+    const dotY = radarY + radarPadding + brick.y * scaleY + brick.height * scaleY / 2;
+    ctx.fillStyle = brick.color;
+    ctx.fillRect(dotX, dotY, 3, 3);
+  }
+
+  ctx.fillStyle = "#edfdfd";
+  ctx.font = "bold 8px Courier New, monospace";
+  ctx.fillText("RADAR", radarX + 8, radarY + 12);
+  ctx.restore();
+}
+
 function draw() {
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -435,13 +725,18 @@ function draw() {
   ctx.shadowColor = PADDLE_COLOR;
   ctx.shadowBlur = 14;
   ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+  drawBlasterFlash();
+  drawPaddleStatus();
   ctx.fillStyle = BALL_COLOR;
   ctx.shadowColor = BALL_COLOR;
   ctx.fillRect(ball.x, ball.y, ball.width, ball.height);
   ctx.shadowBlur = 0;
 
   drawBricks();  // bricks.js
+  drawEnemyProjectiles();
+  drawProjectiles();
   drawParticles();
+  drawRadar();
   drawLives();
 }
 
@@ -489,9 +784,13 @@ function beginGame() {
   level = 1;
   bricks = makeBricks(level);
   particles.length = 0;
+  projectiles.length = 0;
+  enemyProjectiles.length = 0;
   score = 0;
   bricksBroken = 0;
   coinsEarnedThisRun = 0;
+  shieldCharges = upgradeLevels.arcShield;
+  blasterCooldown = 0;
   lives = STARTING_LIVES + upgradeLevels.extraLife;
   applyUpgrades();
   runStartedAt = performance.now();
@@ -556,6 +855,7 @@ function start() {
   applySettings();
   level = 1;
   bricks = makeBricks(level);  // bricks.js
+  enemyProjectiles.length = 0;
   resetBall();
   updateStoreUI();
   draw();

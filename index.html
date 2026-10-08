@@ -28,9 +28,27 @@
           <span class="menu-glow menu-glow-right" aria-hidden="true"></span>
           <span class="menu-rail menu-rail-top" aria-hidden="true"></span>
           <span class="menu-rail menu-rail-bottom" aria-hidden="true"></span>
-          <div id="home-panel">
-            <p class="home-kicker">ARCADE SYSTEM / 01</p>
-            <h1 id="game-title"><span>NEON</span><span class="title-accent">BREAKER</span></h1>
+          <div id="home-panel" class="menu-panel">
+            <div class="hero-copy">
+              <p class="home-kicker">Neon Breaker</p>
+              <h1 id="game-title"><span>NEON</span><span class="title-accent">BREAKER</span></h1>
+            </div>
+
+            <div class="menu-stats" aria-label="Arcade stats">
+              <div class="stat-card">
+                <span>High score</span>
+                <strong id="menu-high-score">0</strong>
+              </div>
+              <div class="stat-card">
+                <span>Coins</span>
+                <strong id="menu-coins">0</strong>
+              </div>
+              <div class="stat-card">
+                <span>Best level</span>
+                <strong id="menu-best-level">1</strong>
+              </div>
+            </div>
+
             <p class="home-subtitle">Clear the grid. Keep the ball alive.</p>
           </div>
           <div class="game-over-panel" id="game-over-panel" hidden>
@@ -46,7 +64,16 @@
               <div class="run-stat"><span>Lives used</span><strong id="lives-used-result">0</strong></div>
             </div>
           </div>
-          <button class="settings-toggle" id="settings-toggle" type="button" aria-expanded="false" aria-controls="settings-panel">Settings</button>
+
+          <div class="menu-actions">
+            <button class="settings-toggle" id="settings-toggle" type="button" aria-expanded="false" aria-controls="settings-panel">Settings</button>
+            <button class="play-button" id="start-button" type="button">Start game</button>
+            <button class="play-button" id="play-again-button" type="button" hidden>Play again</button>
+            <button class="menu-store-button" id="menu-store-button" type="button" aria-haspopup="dialog" aria-controls="store-screen">
+              Store <span id="menu-store-balance" aria-live="polite">0</span> coins
+            </button>
+          </div>
+
           <div class="settings-bar" id="settings-panel" role="group" aria-label="Game settings" hidden>
             <label class="setting-control">
               <span class="setting-heading">Ball speed <output id="ball-speed-value" for="ball-speed">4</output></span>
@@ -65,11 +92,7 @@
               </select>
             </label>
           </div>
-          <button class="play-button" id="start-button" type="button">Start game</button>
-          <button class="play-button" id="play-again-button" type="button" hidden>Play again</button>
-          <button class="menu-store-button" id="menu-store-button" type="button" aria-haspopup="dialog" aria-controls="store-screen">
-            Store <span id="menu-store-balance" aria-live="polite">0</span> coins
-          </button>
+
           <div class="controls-legend" role="group" aria-label="Move the paddle with the arrow keys or A and D">
             <div class="key-group" aria-hidden="true">
               <kbd>←</kbd><kbd>→</kbd><span>or</span><kbd>A</kbd><kbd>D</kbd>
@@ -89,48 +112,55 @@
           <p class="store-balance">Coins <strong id="store-balance" aria-live="polite">0</strong></p>
         </div>
         <div class="upgrade-list">
-          <article class="upgrade-row">
-            <div class="upgrade-copy">
-              <h3>Wide paddle</h3>
-              <p>Increase paddle width by 18 pixels.</p>
-            </div>
-            <button class="upgrade-buy" id="buy-wide-paddle" type="button">Buy 120</button>
-          </article>
-          <article class="upgrade-row">
-            <div class="upgrade-copy">
-              <h3>Paddle boost</h3>
-              <p>Increase paddle movement speed.</p>
-            </div>
-            <button class="upgrade-buy" id="buy-paddle-boost" type="button">Buy 100</button>
-          </article>
-          <article class="upgrade-row">
-            <div class="upgrade-copy">
-              <h3>Extra life</h3>
-              <p>Start each run with one more life.</p>
-            </div>
-            <button class="upgrade-buy" id="buy-extra-life" type="button">Buy 250</button>
-          </article>
-          <article class="upgrade-row">
-            <div class="upgrade-copy">
-              <h3>Ball turbo</h3>
-              <p>Increase the ball speed by 0.8 each level.</p>
-            </div>
-            <button class="upgrade-buy" id="buy-ball-speed" type="button">Buy 160</button>
-          </article>
-          <article class="upgrade-row">
-            <div class="upgrade-copy">
-              <h3>Coin burst</h3>
-              <p>Boost all coin rewards by 20% per level.</p>
-            </div>
-            <button class="upgrade-buy" id="buy-coin-bonus" type="button">Buy 180</button>
-          </article>
-          <article class="upgrade-row">
-            <div class="upgrade-copy">
-              <h3>Paddle grip</h3>
-              <p>Give the paddle a stronger rebound angle.</p>
-            </div>
-            <button class="upgrade-buy" id="buy-paddle-grip" type="button">Buy 210</button>
-          </article>
+          <div class="store-section weapon-section">
+            <h3 class="store-section-title">Weapons</h3>
+            <article class="upgrade-row">
+              <div class="upgrade-copy">
+                <h3>Block blaster</h3>
+                <p>Basic paddle cannon with steady neon shots.</p>
+              </div>
+              <button class="upgrade-buy" id="buy-block-blaster" type="button">Buy 300</button>
+            </article>
+            <article class="upgrade-row">
+              <div class="upgrade-copy">
+                <h3>Pulse cannon</h3>
+                <p>Faster, sharper shots that pressure the front line.</p>
+              </div>
+              <button class="upgrade-buy" id="buy-pulse-cannon" type="button">Buy 360</button>
+            </article>
+            <article class="upgrade-row">
+              <div class="upgrade-copy">
+                <h3>Scatter shot</h3>
+                <p>Launch a burst of side-spread shells across the lane.</p>
+              </div>
+              <button class="upgrade-buy" id="buy-scatter-shot" type="button">Buy 420</button>
+            </article>
+            <article class="upgrade-row">
+              <div class="upgrade-copy">
+                <h3>Rail cannon</h3>
+                <p>Heavy beam fire for longer-range precision strikes.</p>
+              </div>
+              <button class="upgrade-buy" id="buy-rail-cannon" type="button">Buy 520</button>
+            </article>
+          </div>
+
+          <div class="store-section shield-section">
+            <h3 class="store-section-title">Shields</h3>
+            <article class="upgrade-row">
+              <div class="upgrade-copy">
+                <h3>Arc shield</h3>
+                <p>Absorb one missed ball before the run ends.</p>
+              </div>
+              <button class="upgrade-buy" id="buy-arc-shield" type="button">Buy 260</button>
+            </article>
+            <article class="upgrade-row">
+              <div class="upgrade-copy">
+                <h3>Extra life</h3>
+                <p>Start each run with one more life.</p>
+              </div>
+              <button class="upgrade-buy" id="buy-extra-life" type="button">Buy 250</button>
+            </article>
+          </div>
         </div>
         <p class="store-note">Earn 10 coins per brick, plus bonuses for score and survival time.</p>
         <button class="store-resume" id="close-store-button" type="button">Resume game</button>
