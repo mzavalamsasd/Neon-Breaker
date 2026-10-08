@@ -38,6 +38,9 @@ const upgradeButtons = {
   arcShield: document.getElementById("buy-arc-shield"),
   chainBonus: document.getElementById("buy-chain-bonus")
 };
+const activeUpgradeButtons = Object.fromEntries(
+  Object.entries(upgradeButtons).filter(([, button]) => button)
+);
 const settingsToggle = document.getElementById("settings-toggle");
 const settingsPanel = document.getElementById("settings-panel");
 const ballSpeedControl = document.getElementById("ball-speed");
@@ -162,6 +165,10 @@ function applyUpgrades() {
   paddle.x = Math.max(0, Math.min(WIDTH - paddle.width, center - paddle.width / 2));
 }
 
+function getActiveWeaponLevel() {
+  return upgradeLevels.blockBlaster + upgradeLevels.pulseCannon + upgradeLevels.scatterShot + upgradeLevels.railCannon;
+}
+
 function awardCoins(amount) {
   const bonusMultiplier = 1 + upgradeLevels.coinBonus * 0.2 + upgradeLevels.chainBonus * 0.1;
   const earned = Math.max(0, Math.floor(amount * bonusMultiplier));
@@ -206,6 +213,10 @@ function updateStoreUI() {
   updateMenuStats();
 
   for (const [name, button] of Object.entries(upgradeButtons)) {
+    if (!button) {
+      continue;
+    }
+
     const definition = UPGRADE_DEFINITIONS[name];
     const level = upgradeLevels[name];
     const atMaxLevel = level >= definition.maxLevel;
@@ -350,7 +361,7 @@ document.addEventListener("keyup", function (event) {
 // what they touched.
 // ------------------------------------------------------------
 function fireBlaster() {
-  const totalWeaponLevel = upgradeLevels.blockBlaster + upgradeLevels.pulseCannon + upgradeLevels.scatterShot + upgradeLevels.railCannon;
+  const totalWeaponLevel = getActiveWeaponLevel();
   if (totalWeaponLevel <= 0 || blasterCooldown > 0 || gameState !== "playing") {
     return;
   }
@@ -474,8 +485,13 @@ function updateEnemyProjectiles() {
     const dx = targetX - originX;
     const dy = paddle.y - originY;
     const distance = Math.max(12, Math.hypot(dx, dy));
-    const speed = 2.6 + level * 0.25;
 
+    if (distance > 260) {
+      brick.fireCooldown = Math.max(20, brick.fireRate * 0.5);
+      continue;
+    }
+
+    const speed = 2.6 + level * 0.25;
     enemyProjectiles.push({
       x: originX - 3,
       y: originY,
@@ -494,7 +510,7 @@ function update() {
   movePaddle();
   moveBall();
 
-  if (keys[" "] && (upgradeLevels.blockBlaster + upgradeLevels.pulseCannon + upgradeLevels.scatterShot + upgradeLevels.railCannon) > 0) {
+  if (keys[" "] && getActiveWeaponLevel() > 0) {
     fireBlaster();
   }
 
@@ -786,6 +802,7 @@ function beginGame() {
   particles.length = 0;
   projectiles.length = 0;
   enemyProjectiles.length = 0;
+  muzzleFlash = 0;
   score = 0;
   bricksBroken = 0;
   coinsEarnedThisRun = 0;
@@ -827,6 +844,11 @@ function saveHighScore() {
 
 function finishGame() {
   gameState = "game-over";
+  particles.length = 0;
+  projectiles.length = 0;
+  enemyProjectiles.length = 0;
+  muzzleFlash = 0;
+
   const elapsedSeconds = Math.floor((performance.now() - runStartedAt) / 1000);
   const minutes = Math.floor(elapsedSeconds / 60);
   const seconds = String(elapsedSeconds % 60).padStart(2, "0");
@@ -866,7 +888,7 @@ function start() {
 }
 
 // Wait until all three script files have loaded, then start.
-for (const [name, button] of Object.entries(upgradeButtons)) {
+for (const [name, button] of Object.entries(activeUpgradeButtons)) {
   button.addEventListener("click", () => buyUpgrade(name));
 }
 
