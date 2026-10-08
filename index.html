@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Neon Breaker</title>
+  <title>Neon Rush</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -11,18 +11,18 @@
     <section class="loading-screen" id="loading-screen" role="status" aria-live="polite">
       <div class="loading-content">
         <p class="home-kicker">ARCADE SYSTEM / 01</p>
-        <h1><span>NEON</span><span class="title-accent">BREAKER</span></h1>
+        <h1><span>NEON</span><span class="title-accent">RUSH</span></h1>
         <p class="loading-label">Initializing playfield</p>
         <div class="loading-track" aria-hidden="true"><span></span></div>
         <p class="loading-status">Calibrating grid</p>
       </div>
     </section>
     <div class="game-stage">
-      <canvas id="game" width="600" height="450" aria-label="Neon Breaker game"></canvas>
+      <canvas id="game" width="600" height="450" aria-label="Neon Rush game"></canvas>
       <button class="game-store-button" id="game-store-button" type="button" aria-haspopup="dialog" aria-controls="store-screen" hidden>
         Store <span id="game-store-balance" aria-live="polite">0</span>
       </button>
-      <section class="home-screen" id="home-screen" aria-label="Neon Breaker menu" inert>
+      <section class="home-screen" id="home-screen" aria-label="Neon Rush menu" inert>
         <div class="home-content">
           <span class="menu-glow menu-glow-left" aria-hidden="true"></span>
           <span class="menu-glow menu-glow-right" aria-hidden="true"></span>
@@ -30,8 +30,8 @@
           <span class="menu-rail menu-rail-bottom" aria-hidden="true"></span>
           <div id="home-panel" class="menu-panel">
             <div class="hero-copy">
-              <p class="home-kicker">Neon Breaker</p>
-              <h1 id="game-title"><span>NEON</span><span class="title-accent">BREAKER</span></h1>
+              <p class="home-kicker">Neon Rush</p>
+              <h1 id="game-title"><span>NEON</span><span class="title-accent">RUSH</span></h1>
             </div>
 
             <div class="menu-stats" aria-label="Arcade stats">
@@ -49,7 +49,7 @@
               </div>
             </div>
 
-            <p class="home-subtitle">Clear the grid. Keep the ball alive.</p>
+            <p class="home-subtitle">Blast the swarm. Keep the run alive.</p>
           </div>
           <div class="game-over-panel" id="game-over-panel" hidden>
             <p class="home-kicker">RUN COMPLETE</p>

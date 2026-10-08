@@ -1,8 +1,8 @@
 // ============================================================
-// BLOCK BREAKER (base game)
+// NEON RUSH (base game)
 //
 // game.js  = the canvas, the ball, the paddle, and the game loop
-// bricks.js     = where the bricks are and how they are drawn
+// bricks.js     = where the drones are and how they are drawn
 // collisions.js = what happens when the ball touches things
 // ============================================================
 
@@ -50,8 +50,8 @@ const main = document.querySelector("main");
 const WIDTH = canvas.width;   // 600
 const HEIGHT = canvas.height; // 450
 const STARTING_LIVES = 3;
-const HIGH_SCORE_KEY = "neon-breaker-high-score";
-const STORE_KEY = "neon-breaker-store";
+const HIGH_SCORE_KEY = "neon-rush-high-score";
+const STORE_KEY = "neon-rush-store";
 const NEON_CYAN = "#42f5e9";
 const PADDLE_COLOR = "#54a8ff";
 const BALL_COLOR = "#ffdc4a";
@@ -802,7 +802,7 @@ function beginGame() {
   startButton.hidden = false;
   playAgainButton.hidden = true;
   gameStoreButton.hidden = false;
-  homeScreen.setAttribute("aria-label", "Neon Breaker menu");
+  homeScreen.setAttribute("aria-label", "Neon Rush menu");
   homeScreen.hidden = true;
   lastTime = runStartedAt;
   requestAnimationFrame(frame);
@@ -845,7 +845,7 @@ function finishGame() {
   startButton.hidden = true;
   playAgainButton.hidden = false;
   gameStoreButton.hidden = true;
-  homeScreen.setAttribute("aria-label", "Neon Breaker game over");
+  homeScreen.setAttribute("aria-label", "Neon Rush game over");
   homeScreen.hidden = false;
 }
 
